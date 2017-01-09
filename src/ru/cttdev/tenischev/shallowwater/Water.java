@@ -2,23 +2,37 @@ package ru.cttdev.tenischev.shallowwater;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Random;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created by kris13 on 06.01.17.
  */
 public class Water {
 
-    public static final double G = 9.8;
-    public static final double INIT_HEIGHT = 2.0;
+    static final double G = 9.8;
+    static final double INIT_HEIGHT = 2.0;
 
-    private static double dt = .005;
+    private static final int NUMBER_OF_THREADS = 4;
+    private static final boolean parallelism = true;
+
+    private static double dt = .0005;
     private static double dx = .2;
     private static double dy = .2;
 
+    private ArrayList<FirstStep> firstSteps;
+    private ArrayList<SecondStep> secondSteps;
+    private CyclicBarrier barrier;
+    private ExecutorService executorService;
 
-    public VectorU[][] u;
-    public List<Double> energies;
+
+    VectorU[][] u;
+    List<Double> energies;
 
     private int size;
 
@@ -29,6 +43,18 @@ public class Water {
 
     public Water(int size) {
         this.size = size;
+        if (parallelism && size > 500) {
+            AtomicInteger counter = new AtomicInteger(0);
+            executorService = Executors.newFixedThreadPool(NUMBER_OF_THREADS,
+                    r -> new Thread(r, String.valueOf(counter.getAndIncrement())));
+            barrier = new CyclicBarrier(NUMBER_OF_THREADS);
+            firstSteps = new ArrayList<>();
+            secondSteps = new ArrayList<>();
+            for (int i = 0; i < NUMBER_OF_THREADS; i++) {
+                firstSteps.add(new FirstStep());
+                secondSteps.add(new SecondStep());
+            }
+        }
 
         energies = new ArrayList<>();
 
@@ -55,31 +81,81 @@ public class Water {
         }
     }
 
-    public void nextStep() {
+    void nextStep() throws InterruptedException {
         energies.add(calculateEnergy(u));
 
-        for (int i = 0; i < size; i++) {
-            for (int j = 0; j < size; j++) {
-                if (i + 1 < size) {
-                    uHalfX[i][j] = u[i][j].add(u[i + 1][j]).multiply(0.5).subtract(u[i + 1][j].f().subtract(u[i][j].f()).multiply(dt / (2 * dx)));
-                }
-                if (j + 1 < size) {
-                    uHalfY[i][j] = u[i][j].add(u[i][j + 1]).multiply(0.5).subtract(u[i][j + 1].g().subtract(u[i][j].g()).multiply(dt / (2 * dy)));
+        if (executorService != null) {
+            executorService.invokeAll(firstSteps);
+            barrier.reset();
+        } else {
+            for (int i = 0; i < size; i++) {
+                for (int j = 0; j < size; j++) {
+                    if (i + 1 < size) {
+                        uHalfX[i][j] = u[i][j].add(u[i + 1][j]).multiply(0.5).subtract(u[i + 1][j].f().subtract(u[i][j].f()).multiply(dt / (2 * dx)));
+                    }
+                    if (j + 1 < size) {
+                        uHalfY[i][j] = u[i][j].add(u[i][j + 1]).multiply(0.5).subtract(u[i][j + 1].g().subtract(u[i][j].g()).multiply(dt / (2 * dy)));
+                    }
                 }
             }
         }
 
-        for (int i = 0; i < size; i++) {
-            for (int j = 0; j < size; j++) {
-                if (i + 1 == size) {
-                    u[i][j] = u[0][j];
-                } else if (j + 1 == size) {
-                    u[i][j] = u[i][0];
-                } else {
-                    u[i][j] = u[i][j].subtract(uHalfX[i][j].f().subtract(uHalfX[(i - 1 + uHalfX.length) % uHalfX.length][j].f()).multiply(dt / dx))
-                            .subtract(uHalfY[i][j].g().subtract(uHalfY[i][(j - 1 + uHalfX.length) % uHalfX.length].g()).multiply(dt / dy));
+        if (executorService != null) {
+            executorService.invokeAll(secondSteps);
+            barrier.reset();
+        } else {
+            for (int i = 0; i < size; i++) {
+                for (int j = 0; j < size; j++) {
+                    if (i + 1 == size) {
+                        u[i][j] = u[0][j];
+                    } else if (j + 1 == size) {
+                        u[i][j] = u[i][0];
+                    } else {
+                        u[i][j] = u[i][j].subtract(uHalfX[i][j].f().subtract(uHalfX[(i - 1 + uHalfX.length) % uHalfX.length][j].f()).multiply(dt / dx))
+                                .subtract(uHalfY[i][j].g().subtract(uHalfY[i][(j - 1 + uHalfX.length) % uHalfX.length].g()).multiply(dt / dy));
+                    }
                 }
             }
+        }
+    }
+
+    private class FirstStep implements Callable<Object> {
+        @Override
+        public Object call() throws Exception {
+            double shift = Integer.parseInt(Thread.currentThread().getName()) * (size * 1d / NUMBER_OF_THREADS);
+            for (int i = (int) shift; i < shift + (size * 1d / NUMBER_OF_THREADS); i++) {
+                for (int j = 0; j < size; j++) {
+                    if (i + 1 < size) {
+                        uHalfX[i][j] = u[i][j].add(u[i + 1][j]).multiply(0.5).subtract(u[i + 1][j].f().subtract(u[i][j].f()).multiply(dt / (2 * dx)));
+                    }
+                    if (j + 1 < size) {
+                        uHalfY[i][j] = u[i][j].add(u[i][j + 1]).multiply(0.5).subtract(u[i][j + 1].g().subtract(u[i][j].g()).multiply(dt / (2 * dy)));
+                    }
+                }
+            }
+            barrier.await();
+            return null;
+        }
+    }
+
+    private class SecondStep implements Callable<Object> {
+        @Override
+        public Objects call() throws Exception {
+            double shift = Integer.parseInt(Thread.currentThread().getName()) * (size * 1d / NUMBER_OF_THREADS);
+            for (int i = (int) shift; i < shift + (size * 1d / NUMBER_OF_THREADS); i++) {
+                for (int j = 0; j < size; j++) {
+                    if (i + 1 == size) {
+                        u[i][j] = u[0][j];
+                    } else if (j + 1 == size) {
+                        u[i][j] = u[i][0];
+                    } else {
+                        u[i][j] = u[i][j].subtract(uHalfX[i][j].f().subtract(uHalfX[(i - 1 + uHalfX.length) % uHalfX.length][j].f()).multiply(dt / dx))
+                                .subtract(uHalfY[i][j].g().subtract(uHalfY[i][(j - 1 + uHalfX.length) % uHalfX.length].g()).multiply(dt / dy));
+                    }
+                }
+            }
+            barrier.await();
+            return null;
         }
     }
 
