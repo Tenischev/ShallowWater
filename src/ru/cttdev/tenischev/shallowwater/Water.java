@@ -21,7 +21,7 @@ public class Water {
     private static final int NUMBER_OF_THREADS = 4;
     private static final boolean parallelism = true;
 
-    private static double dt = .0005;
+    private static double dt = .005;
     private static double dx = .2;
     private static double dy = .2;
 
@@ -44,9 +44,13 @@ public class Water {
     public Water(int size) {
         this.size = size;
         if (parallelism && size > 500) {
-            AtomicInteger counter = new AtomicInteger(0);
-            executorService = Executors.newFixedThreadPool(NUMBER_OF_THREADS,
-                    r -> new Thread(r, String.valueOf(counter.getAndIncrement())));
+            final AtomicInteger counter = new AtomicInteger(0);
+            executorService = Executors.newFixedThreadPool(NUMBER_OF_THREADS, new java.util.concurrent.ThreadFactory() {
+                        @Override
+                        public Thread newThread(Runnable r) {
+                            return new Thread(r, String.valueOf(counter.getAndIncrement()));
+                        }
+                    });
             barrier = new CyclicBarrier(NUMBER_OF_THREADS);
             firstSteps = new ArrayList<>();
             secondSteps = new ArrayList<>();
@@ -162,11 +166,9 @@ public class Water {
     /**
      * Create pike on center of water surface.
      */
-    public void createPike() {
+    public void createCenterPike() {
         int point = size / 2;
-        double p = (INIT_HEIGHT + .3) * (INIT_HEIGHT + .3) * G - u[point][point].h * u[point][point].h * G;
-        u[point][point].h = INIT_HEIGHT + .3;
-        energies.set(0, energies.get(0) + p);
+        createPike(point, point);
     }
 
     /**
@@ -175,8 +177,32 @@ public class Water {
     public void createRandomPike() {
         int point1 = random.nextInt(u.length);
         int point2 = random.nextInt(u.length);
+        createPike(point1, point2);
+    }
+
+    private void createPike(int point1, int point2) {
         double p = (INIT_HEIGHT + .3) * (INIT_HEIGHT + .3) * G - u[point1][point2].h * u[point1][point2].h * G;
+        p += (INIT_HEIGHT + .2) * (INIT_HEIGHT + .2) * G - u[point1 + 1][point2].h * u[point1 + 1][point2].h * G;
+        p += (INIT_HEIGHT + .2) * (INIT_HEIGHT + .2) * G - u[point1][point2 + 1].h * u[point1][point2 + 1].h * G;
+        p += (INIT_HEIGHT + .2) * (INIT_HEIGHT + .2) * G - u[point1 - 1][point2].h * u[point1 - 1][point2].h * G;
+        p += (INIT_HEIGHT + .2) * (INIT_HEIGHT + .2) * G - u[point1][point2 - 1].h * u[point1][point2 - 1].h * G;
+
+        p += (INIT_HEIGHT + .1) * (INIT_HEIGHT + .1) * G - u[point1 + 1][point2 + 1].h * u[point1 + 1][point2 + 1].h * G;
+        p += (INIT_HEIGHT + .1) * (INIT_HEIGHT + .1) * G - u[point1 - 1][point2 - 1].h * u[point1 - 1][point2 - 1].h * G;
+        p += (INIT_HEIGHT + .1) * (INIT_HEIGHT + .1) * G - u[point1 + 1][point2 - 1].h * u[point1 + 1][point2 - 1].h * G;
+        p += (INIT_HEIGHT + .1) * (INIT_HEIGHT + .1) * G - u[point1 - 1][point2 + 1].h * u[point1 - 1][point2 + 1].h * G;
+
         u[point1][point2].h = INIT_HEIGHT + .3;
+
+        u[point1 + 1][point2].h = INIT_HEIGHT + .2;
+        u[point1 - 1][point2].h = INIT_HEIGHT + .2;
+        u[point1][point2 + 1].h = INIT_HEIGHT + .2;
+        u[point1][point2 - 1].h = INIT_HEIGHT + .2;
+
+        u[point1 + 1][point2 + 1].h = INIT_HEIGHT + .1;
+        u[point1 - 1][point2 - 1].h = INIT_HEIGHT + .1;
+        u[point1 - 1][point2 + 1].h = INIT_HEIGHT + .1;
+        u[point1 + 1][point2 - 1].h = INIT_HEIGHT + .1;
         energies.set(0, energies.get(0) + p);
     }
 

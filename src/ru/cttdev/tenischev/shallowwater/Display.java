@@ -2,10 +2,10 @@ package ru.cttdev.tenischev.shallowwater;
 
 import com.jogamp.opengl.util.Animator;
 
-import javax.media.opengl.GL2;
-import javax.media.opengl.GLAutoDrawable;
-import javax.media.opengl.GLEventListener;
-import javax.media.opengl.awt.GLCanvas;
+import com.jogamp.opengl.GL2;
+import com.jogamp.opengl.GLAutoDrawable;
+import com.jogamp.opengl.GLEventListener;
+import com.jogamp.opengl.awt.GLCanvas;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
@@ -64,15 +64,18 @@ public class Display extends Frame implements GLEventListener, KeyListener {
         canvas.addGLEventListener(this);
 
         add(canvas, BorderLayout.CENTER);
-        Animator anim = new Animator(canvas);
+        final Animator anim = new Animator(canvas);
         anim.start();
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
 
-                new Thread(() -> {
-                    anim.stop();
-                    System.exit(0);
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        anim.stop();
+                        System.exit(0);
+                    }
                 }).start();
             }
         });
@@ -161,7 +164,7 @@ public class Display extends Frame implements GLEventListener, KeyListener {
     public void keyReleased(KeyEvent e) {
         switch (e.getKeyCode()) {
             case KeyEvent.VK_P:
-                water.createPike();
+                water.createCenterPike();
                 break;
             case KeyEvent.VK_R:
                 water.createRandomPike();
