@@ -181,28 +181,22 @@ public class Water {
     }
 
     private void createPike(int point1, int point2) {
-        double p = (INIT_HEIGHT + .3) * (INIT_HEIGHT + .3) * G - u[point1][point2].h * u[point1][point2].h * G;
-        p += (INIT_HEIGHT + .2) * (INIT_HEIGHT + .2) * G - u[point1 + 1][point2].h * u[point1 + 1][point2].h * G;
-        p += (INIT_HEIGHT + .2) * (INIT_HEIGHT + .2) * G - u[point1][point2 + 1].h * u[point1][point2 + 1].h * G;
-        p += (INIT_HEIGHT + .2) * (INIT_HEIGHT + .2) * G - u[point1 - 1][point2].h * u[point1 - 1][point2].h * G;
-        p += (INIT_HEIGHT + .2) * (INIT_HEIGHT + .2) * G - u[point1][point2 - 1].h * u[point1][point2 - 1].h * G;
+        upInPoint(point1, point2, .3);
 
-        p += (INIT_HEIGHT + .1) * (INIT_HEIGHT + .1) * G - u[point1 + 1][point2 + 1].h * u[point1 + 1][point2 + 1].h * G;
-        p += (INIT_HEIGHT + .1) * (INIT_HEIGHT + .1) * G - u[point1 - 1][point2 - 1].h * u[point1 - 1][point2 - 1].h * G;
-        p += (INIT_HEIGHT + .1) * (INIT_HEIGHT + .1) * G - u[point1 + 1][point2 - 1].h * u[point1 + 1][point2 - 1].h * G;
-        p += (INIT_HEIGHT + .1) * (INIT_HEIGHT + .1) * G - u[point1 - 1][point2 + 1].h * u[point1 - 1][point2 + 1].h * G;
+        upInPoint(point1 + 1, point2, .2);
+        upInPoint(point1, point2 + 1, .2);
+        upInPoint(point1 - 1, point2, .2);
+        upInPoint(point1, point2 - 1, .2);
 
-        u[point1][point2].h = INIT_HEIGHT + .3;
+        upInPoint(point1 + 1, point2 + 1, .1);
+        upInPoint(point1 - 1, point2 - 1, .1);
+        upInPoint(point1 + 1, point2 - 1, .1);
+        upInPoint(point1 - 1, point2 + 1, .1);
+    }
 
-        u[point1 + 1][point2].h = INIT_HEIGHT + .2;
-        u[point1 - 1][point2].h = INIT_HEIGHT + .2;
-        u[point1][point2 + 1].h = INIT_HEIGHT + .2;
-        u[point1][point2 - 1].h = INIT_HEIGHT + .2;
-
-        u[point1 + 1][point2 + 1].h = INIT_HEIGHT + .1;
-        u[point1 - 1][point2 - 1].h = INIT_HEIGHT + .1;
-        u[point1 - 1][point2 + 1].h = INIT_HEIGHT + .1;
-        u[point1 + 1][point2 - 1].h = INIT_HEIGHT + .1;
+    private void upInPoint(int x, int y, double z) {
+        double p = (INIT_HEIGHT + z) * (INIT_HEIGHT + z) * G - u[x][y].h * u[x][y].h * G;
+        u[x][y].h = INIT_HEIGHT + z;
         energies.set(0, energies.get(0) + p);
     }
 
@@ -211,7 +205,7 @@ public class Water {
      */
     public void createFront() {
         for (int i = 0; i < size; i++) {
-            u[1][i].h = INIT_HEIGHT + .1;
+            upInPoint(1, i, .1);
         }
     }
 
@@ -219,9 +213,9 @@ public class Water {
      * Create periodic wave on water surface.
      */
     public void createWave() {
-        for (int i = 1; i < size; i += 2) {
+        for (int i = 1; i < size; i ++) {
             for (int j = 0; j < size; j++) {
-                u[i][j].h = INIT_HEIGHT + .1;
+                upInPoint(i, j, Math.sin(i) * 0.1);
             }
         }
     }

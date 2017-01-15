@@ -23,6 +23,8 @@ public class Display extends Frame implements GLEventListener, KeyListener {
 
     private Label manual1 = new Label();
     private Label manual2 = new Label();
+    private Label manual3 = new Label();
+    private Label manual4 = new Label();
     private Label energy = new Label();
 
 
@@ -39,7 +41,13 @@ public class Display extends Frame implements GLEventListener, KeyListener {
         manual2.setText("R - Add pike in random point");
         manual2.setBounds(100, 80, 200, 30);
         add(manual2);
-        energy.setBounds(100, 110, 200, 30);
+        manual3.setText("W - Add periodic waves");
+        manual3.setBounds(100, 110, 200, 30);
+        add(manual3);
+        manual4.setText("F - Add single wave");
+        manual4.setBounds(100, 140, 200, 30);
+        add(manual4);
+        energy.setBounds(100, 170, 200, 30);
         add(energy);
 
         setLayout(new BorderLayout());
