@@ -123,29 +123,29 @@ public class Display extends Frame implements GLEventListener, KeyListener {
             for (int i = 0; i < u.length - 1; i++) {
                 for (int j = 0; j < u.length - 1; j++) {
                     gl.glBegin(GL2.GL_TRIANGLES);
-                    double gap = (height - u[i][j].h) * 5.0;
+                    double gap = (height - u[i][j].h)/* * 5.0*/;
                     gl.glColor3d(0.5 - gap, 0.5 - gap, 1);
-                    gl.glVertex3d(i, j, gap);
+                    gl.glVertex3d(i, j, gap * 10.);
 
-                    gap = (height - u[i + 1][j].h) * 5.0;
+                    gap = (height - u[i + 1][j].h)/* * 5.0*/;
                     gl.glColor3d(0.5 - gap, 0.5 - gap, 1);
-                    gl.glVertex3d(i + 1, j, gap);
+                    gl.glVertex3d(i + 1, j, gap * 10.);
 
-                    gap = (height - u[i + 1][j + 1].h) * 5.0;
+                    gap = (height - u[i + 1][j + 1].h)/* * 5.0*/;
                     gl.glColor3d(0.5 - gap, 0.5 - gap, 1);
-                    gl.glVertex3d(i + 1, j + 1, gap);
+                    gl.glVertex3d(i + 1, j + 1, gap * 10.);
 
-                    gap = (height - u[i][j].h) * 5.0;
+                    gap = (height - u[i][j].h)/* * 5.0*/;
                     gl.glColor3d(0.5 - gap, 0.5 - gap, 1);
-                    gl.glVertex3d(i, j, gap);
+                    gl.glVertex3d(i, j, gap * 10.);
 
-                    gap = (height - u[i][j + 1].h) * 5.0;
+                    gap = (height - u[i][j + 1].h)/* * 5.0*/;
                     gl.glColor3d(0.5 - gap, 0.5 - gap, 1);
-                    gl.glVertex3d(i, j + 1, gap);
+                    gl.glVertex3d(i, j + 1, gap * 10.);
 
-                    gap = (height - u[i + 1][j + 1].h) * 5.0;
+                    gap = (height - u[i + 1][j + 1].h)/* * 5.0*/;
                     gl.glColor3d(0.5 - gap, 0.5 - gap, 1);
-                    gl.glVertex3d(i + 1, j + 1, gap);
+                    gl.glVertex3d(i + 1, j + 1, gap * 10.);
                     gl.glEnd();
                 }
             }
